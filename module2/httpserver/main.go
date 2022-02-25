@@ -1,23 +1,68 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
 	"time"
 )
 
 func main() {
-	http.HandleFunc("/header", headers)
-	http.HandleFunc("/healthz", healthz)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/header", headers)
+	mux.HandleFunc("/healthz", healthz)
 
-	http.ListenAndServe(":8001", nil)
+	server := &http.Server{
+		Addr:    ":8001",
+		Handler: mux,
+	}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		s := <-c
+		fmt.Printf("System Single call: %+v\n", s)
+		cancel()
+	}()
+
+	go func() {
+		fmt.Println("Server start")
+		// When Shutdown is called, Serve, ListenAndServe, and
+		// ListenAndServeTLS immediately return ErrServerClosed. Make sure the
+		// program doesn't exit and waits instead for Shutdown to return.
+		err := server.ListenAndServe()
+		fmt.Printf("Server close: %+v\n", err)
+	}()
+
+	// 优雅关闭
+	// ListenAndServe 会直接返回 所以 我们主程序要改由 Shutdown 阻塞
+	<-ctx.Done()
+	fmt.Println("Received close single.")
+	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer func() {
+		timeoutCancel()
+	}()
+
+	if err := server.Shutdown(timeoutCtx); err != nil {
+		fmt.Printf("Server Shutdown err; %+v\n", err)
+		return
+	}
+	fmt.Println("Server closed gracefully")
+
 }
 
 func healthz(w http.ResponseWriter, r *http.Request) {
 	httpState := http.StatusOK
+	fmt.Fprintf(w, "ok")
+	for i := 1; i <= 7; i++ {
+		fmt.Println(i)
+		time.Sleep(time.Second)
+	}
 
 	defer func() {
 		requestInfo(httpState, r)
@@ -36,7 +81,6 @@ func headers(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add(name, header)
 		}
 	}
-
 }
 
 func requestInfo(httpState int, r *http.Request) {

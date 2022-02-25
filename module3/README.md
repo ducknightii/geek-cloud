@@ -23,7 +23,7 @@ nsenter -n -t{PID}
 
 ```
 root@VM-4-12-ubuntu:/home/ubuntu/github.com/ducknightii/geek-cloud/module2/httpserver# ip addr
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 100
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
        valid_lft forever preferred_lft forever
