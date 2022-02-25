@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpserver
+  name: httpserver
+  namespace: web
+spec:
+  ports:
+    - name: "web"
+      port: 8001
+      protocol: TCP
+      targetPort: 8001
+  selector:
+    app: httpserver
