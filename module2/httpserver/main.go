@@ -59,10 +59,6 @@ func main() {
 func healthz(w http.ResponseWriter, r *http.Request) {
 	httpState := http.StatusOK
 	fmt.Fprintf(w, "ok")
-	for i := 1; i <= 7; i++ {
-		fmt.Println(i)
-		time.Sleep(time.Second)
-	}
 
 	defer func() {
 		requestInfo(httpState, r)
